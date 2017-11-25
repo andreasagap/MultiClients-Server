@@ -1,26 +1,4 @@
-/* 
- * The MIT License
- *
- * Copyright 2017 Andreas Agapitos.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
+
 package server;
 
 import java.io.*;
@@ -37,7 +15,6 @@ public class Handler extends Thread{
     private BufferedReader in;
     private PrintWriter out;
     private String user;
-    private boolean firstMenu=true;
     private volatile boolean isRunning = true;
 
     /**
@@ -61,9 +38,6 @@ public class Handler extends Thread{
      */
     @Override
     public void run(){
-        out.write(0);
-        out.println("Hello, you connected as a guest.");
-        out.flush();
         String line="";
         while (isRunning) {   
             
@@ -72,7 +46,7 @@ public class Handler extends Thread{
                 line = in.readLine();
                 check(line);
             } catch (IOException ex) {
-                Logger.getLogger(Handler.class.getName()).log(Level.SEVERE, null, ex);
+                LogOut();
             }
             if (line.toLowerCase().equalsIgnoreCase("exit"))
             {
@@ -97,46 +71,37 @@ public class Handler extends Thread{
      */
     private void check(String line) throws IOException
     {
-        if(line.toLowerCase().equalsIgnoreCase("login") && firstMenu)
+        if(line.toLowerCase().equalsIgnoreCase("login"))
         {
             login();    
         }
-        else if(line.toLowerCase().equalsIgnoreCase("signin") && firstMenu)
+        else if(line.toLowerCase().equalsIgnoreCase("signin") )
         {
             register();
         }
-        else if(line.toLowerCase().equalsIgnoreCase("newemail") && !firstMenu)
+        else if(line.toLowerCase().equalsIgnoreCase("newemail") )
         {
             newemail();
         }
-        else if(line.toLowerCase().equalsIgnoreCase("showemails") && !firstMenu)
+        else if(line.toLowerCase().equalsIgnoreCase("showemails"))
         {
             showEmails();
         }
-        else if(line.toLowerCase().equalsIgnoreCase("deleteemail") && !firstMenu)
+        else if(line.toLowerCase().equalsIgnoreCase("deleteemail") )
         {
             deleteEmail();
         }
-        else if(line.toLowerCase().equalsIgnoreCase("logout") && !firstMenu)
+        else if(line.toLowerCase().equalsIgnoreCase("logout"))
         {
             LogOut();
         }
-        else if(line.toLowerCase().equalsIgnoreCase("reademail") && !firstMenu)
+        else if(line.toLowerCase().equalsIgnoreCase("reademail") )
         {
             ReadEmail();
         }
         else
         {
-            if(firstMenu)
-            {
-                out.println("Select Login, SignIn or Exit:");
-                out.flush();
-            }
-            else
-            {
-                out.println("Select a valid option:");
-                out.flush();
-            }
+            isRunning=false;
         }
         
     }
@@ -163,22 +128,20 @@ public class Handler extends Thread{
      */
     private void register() throws IOException
     {
-        out.println("signup");
-        out.println("Choose a username: " );
+
         user=in.readLine();
-        while(CheckIfAccountExist(user))
-        {
-            out.println("This username exist - Please choose again:");
-            out.flush();
-            user=in.readLine();
-        }
-        out.println("Choose the password: " );
         String password=in.readLine();
-        accounts.add(new Account(user,password));
-        out.println("Welcome "+user +"!");
-        out.println(1);
-        out.flush();
-        firstMenu=false;
+        if(CheckIfAccountExist(user))
+        {
+            out.println("Wrong");
+            out.flush();
+            
+        }
+        else{
+            accounts.add(new Account(user,password));
+            out.println("Done");
+            out.flush();
+        }
         
     }
     /**
@@ -221,27 +184,25 @@ public class Handler extends Thread{
      */
     private void login() throws IOException
     {
-            out.println("login");
-            out.println("Write the username: " );
+           
             Account a;
             user=in.readLine();
             a=getAccount(user);
-            while(a==null)
+            if(a==null)
             {
-                 out.println("Wrong username:");
+                 out.println("Wrong");
                  out.flush();
-                 user=in.readLine();
-                 a=getAccount(user);
             }
-            out.println("Write the password: " );
-            while(!in.readLine().equalsIgnoreCase(a.getpassword()))
+            else if(!in.readLine().equalsIgnoreCase(a.getpassword()))
             {
-                 out.println("Wrong password:");
+                 out.println("Wrong");
+                 out.flush();
             }
-            out.println("Welcome back "+user +"!");
-            out.println(1);
-            out.flush();
-            firstMenu=false;
+            else{
+                out.println("Done");
+                out.flush();
+            }
+            
     }
     /**
      *LogOut function
@@ -249,12 +210,7 @@ public class Handler extends Thread{
      */
     private void LogOut()
     {
-        out.println("logout");
-        out.println("Goodbye "+user);
         user="";
-        out.println(0);
-        firstMenu=true;
-        out.flush();
     }
     /**
      *
@@ -262,29 +218,20 @@ public class Handler extends Thread{
      */
     private void ReadEmail() throws IOException
     {
-        out.println("reademail");
         int userp=positionOfUser(user);
         if(accounts.get(userp).mailsize()==0)
         {
-            out.println("No email");
+            //out.println("No email");
         }
         else
         {
-            out.println("Find");
             int ID=Integer.parseInt(in.readLine())-1;
-            while(ID>=accounts.get(userp).mailsize() || ID<0)
-            {
-                out.println("Wrong ID");
-                ID=Integer.parseInt(in.readLine())-1;
-            }
-            out.println("OK");
             out.println(accounts.get(userp).getEmail(ID).getSender());
             out.println(accounts.get(userp).getEmail(ID).getSubject());
             out.println(accounts.get(userp).getEmail(ID).getMain());
             accounts.get(userp).getEmail(ID).setNew(false);
         
         }
-        out.write(1);
         out.flush();
     }
     /**
@@ -293,21 +240,21 @@ public class Handler extends Thread{
      */
     private void newemail() throws IOException
     {
-        out.println("newemail");
-        String receiver=in.readLine();
-        while(!CheckIfAccountExist(receiver))
-        {
-            out.println("No account");
-            receiver=in.readLine();
-        }
-        out.println("Account find");
         
-        String subject=in.readLine();
-        String MainBody=in.readLine();
-        out.println("The email has been sent successfully!");
-        out.write(1);
-        out.flush();
-        accounts.get(positionOfUser(receiver)).addEmail(user, receiver, subject, MainBody);
+        String receiver=in.readLine();
+            if(!CheckIfAccountExist(receiver))
+            {
+                out.println("No account");
+                out.flush();
+
+            }
+            else{
+                out.println("Done");
+                out.flush();
+                String subject=in.readLine();
+                String MainBody=in.readLine();
+                accounts.get(positionOfUser(receiver)).addEmail(user, receiver, subject, MainBody);
+            }
         
     }
     /**
@@ -316,7 +263,6 @@ public class Handler extends Thread{
      */
     private void showEmails() throws IOException
     {
-        out.println("showemails");
         int userp=positionOfUser(user);
         out.write(accounts.get(userp).mailsize());
         String isNew;
@@ -327,9 +273,8 @@ public class Handler extends Thread{
             {
                 isNew="[NEW]";
             }
-            out.println(i+1+ ".   "+isNew+"     "+accounts.get(userp).getEmail(i).getSender()+"       "+accounts.get(userp).getEmail(i).getSubject());
+            out.println(i+1+ " .   "+isNew+"     "+accounts.get(userp).getEmail(i).getSender()+"       "+accounts.get(userp).getEmail(i).getSubject());
         }
-        out.write(1);
         out.flush();
         
     }
@@ -339,7 +284,6 @@ public class Handler extends Thread{
      */
     private void deleteEmail() throws IOException
     {
-        out.println("deleteemail");
         int userp=positionOfUser(user);
         if(accounts.get(userp).mailsize()==0)
         {
@@ -347,17 +291,9 @@ public class Handler extends Thread{
         }
         else
         {
-            out.println("Find");
             int ID=Integer.parseInt(in.readLine())-1;
-            while(ID>=accounts.get(userp).mailsize() || ID<0)
-            {
-                out.println("Wrong ID");
-                ID=Integer.parseInt(in.readLine())-1;
-            }
-            out.println("OK");
             accounts.get(userp).deleteEmail(ID);
         }      
-        out.write(1);
         out.flush();
     }
 }
