@@ -9,8 +9,10 @@
 > - Account 
 
 **Client:** 
-> - main 
 > - Client 
+> - ClientActivity
+> - Email
+> - FirstActivity
 
 **Args:**
 > - Client: IP and Port 
@@ -20,4 +22,4 @@
 
     Server side's command line: java -jar Server.jar 1234
 
-    Client side's command line: java -jar Client.jar localhost 1234
+    Client side's command line: java -jar Client.jar 
